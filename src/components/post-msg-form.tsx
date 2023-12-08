@@ -1,5 +1,8 @@
+import { addDoc, collection, updateDoc } from 'firebase/firestore'
 import { useState } from 'react'
 import styled from 'styled-components'
+import { auth, db, storage } from '../firebase'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 
 const Form = styled.form`
   display: flex;
@@ -59,20 +62,61 @@ export default function PostMsgForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [msg, setMsg] = useState("")
   const [file, setFile] = useState<File | null>(null)
+  const [imgUrl, setImgUrl ] = useState("")
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMsg(e.target.value)
   }
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = e.target
-    if(files && files.length ===1) {
+    if(files){
+      const reader = new FileReader()
+      reader.readAsDataURL(files[0])
+      const url = reader.result as string
+      reader.onloadend = () => {
+        if(!reader.result) return
+        setImgUrl(url)
+      }
+    }
+    if(files && files.length >= 1) {
       setFile(files[0])
     }
   }
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const user = auth.currentUser
+    if(!user || isLoading || msg === "" || msg.length > 180) return
+    try {
+      setIsLoading(true)
+      const doc = await addDoc(collection(db, "msgs"), {
+        msg,
+        createdAt: Date.now(),
+        username: user.displayName || "Anonymous",
+        userId: user.uid
+      })
+      if(file) {
+        const locationRef = ref(storage, `msgs/${user.uid}-${user.displayName}/${doc.id}`)
+        const result = await uploadBytes(locationRef, file)
+        const url = await getDownloadURL(result.ref)
+        await updateDoc(doc, {
+          photo: url,
+        })
+      }
+      setMsg("")
+      setFile(null)
+    } catch(error) {
+      console.log(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  return <Form>
-    <TextArea onChange={onChange} value={msg} placeholder="Your Plan?" rows={5} maxLength={180} />
-    <AttachFileButton htmlFor="file">{file? "Photo added ✅" : "Add photo"}</AttachFileButton>
-    <AttachFileInput onChange={onFileChange} type="file" id="file" accept="image/*" />
-    <SubmitBtn type="submit" value={isLoading? "Posting..." : "Post Message"} />
-  </Form>
+  return (
+    <Form onSubmit={onSubmit}>
+      <TextArea onChange={onChange} value={msg} placeholder="Your Plan?" rows={5} maxLength={180} required />
+      <img src={imgUrl ? imgUrl : ""} />
+      <AttachFileButton htmlFor="file">{file? "Photo added ✅" : "Add photo"}</AttachFileButton>
+      <AttachFileInput onChange={onFileChange} type="file" id="file" accept="image/*" />
+      <SubmitBtn type="submit" value={isLoading? "Posting..." : "Post Message"} />
+    </Form>
+  )
 }
