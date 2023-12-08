@@ -71,14 +71,13 @@ export default function PostMsgForm() {
     if(files){
       const reader = new FileReader()
       reader.readAsDataURL(files[0])
-      const url = reader.result as string
       reader.onloadend = () => {
-        if(!reader.result) return
-        setImgUrl(url)
+        setImgUrl(reader.result)
       }
     }
     if(files && files.length >= 1) {
       setFile(files[0])
+
     }
   }
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -87,14 +86,14 @@ export default function PostMsgForm() {
     if(!user || isLoading || msg === "" || msg.length > 180) return
     try {
       setIsLoading(true)
-      const doc = await addDoc(collection(db, "msgs"), {
+      const doc = await addDoc(collection(db, "messages"), {
         msg,
         createdAt: Date.now(),
         username: user.displayName || "Anonymous",
         userId: user.uid
       })
       if(file) {
-        const locationRef = ref(storage, `msgs/${user.uid}-${user.displayName}/${doc.id}`)
+        const locationRef = ref(storage, `messages/${user.uid}-${user.displayName}/${doc.id}`)
         const result = await uploadBytes(locationRef, file)
         const url = await getDownloadURL(result.ref)
         await updateDoc(doc, {
@@ -103,6 +102,7 @@ export default function PostMsgForm() {
       }
       setMsg("")
       setFile(null)
+      setImgUrl("")
     } catch(error) {
       console.log(error)
     } finally {
