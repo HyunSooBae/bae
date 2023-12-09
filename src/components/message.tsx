@@ -27,12 +27,25 @@ const Photo = styled.img`
   border-radius: 15px;
 `
 
+const DeleteButton = styled.button`
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 5px;
+  background-color: tomato;
+  font-weight: 600;
+  font-size: 12px;
+  color: white;
+  text-transform: uppercase;
+  cursor: pointer;
+`
+
 export default function Message({username, photo, msg}: IMsg) {
   return (
     <Wrapper>
       <Column>
         <Username>{username}</Username>
         <Payload>{msg}</Payload>
+        <DeleteButton>Delete</DeleteButton>
       </Column>
       {photo? (
         <Column>
