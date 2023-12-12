@@ -93,7 +93,7 @@ export default function PostMsgForm() {
         userId: user.uid
       })
       if(file) {
-        const locationRef = ref(storage, `messages/${user.uid}-${user.displayName}/${doc.id}`)
+        const locationRef = ref(storage, `messages/${user.uid}/${doc.id}`)
         const result = await uploadBytes(locationRef, file)
         const url = await getDownloadURL(result.ref)
         await updateDoc(doc, {
