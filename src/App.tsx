@@ -66,9 +66,9 @@ const GlobalStyles = createGlobalStyle`
   ${reset}
   *{
     box-sizing: border-box;
-    ::-webkit-scrollbar {
-    display:none;
-}
+    /* ::-webkit-scrollbar {
+      display:none;
+    } */
   }
   body {
     background-color: black;
