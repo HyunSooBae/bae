@@ -50,7 +50,7 @@ export default function CreateAccount() {
         <Input type="submit" value={isLoading ? "loading..." : "로그인"} />
       </Form>
       {error !== "" ? <Error>{error}</Error> : null}
-      <Link to="/reset-password">비밀번호를 잃어버렸어요</Link>
+      <Link to="/reset-password">비밀번호를 잊어버렸어요</Link>
       <Switcher>
         계정이 없으세요? <Link to="/create-account">회원가입하기 &rarr;</Link>
       </Switcher>
