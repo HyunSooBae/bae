@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 import { auth, db, storage } from '../firebase'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { updateProfile } from 'firebase/auth'
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore'
@@ -37,8 +37,35 @@ const AvatarImg = styled.img`
 const AvatarInput = styled.input`
   display: none;
 `
-const Name = styled.span`
+
+const Flexbox = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+`
+
+const Name = styled.input`
+  border: none;
+  border-bottom: 1px solid #1d9bf0;
+  width: 160px;
+  height: 28px;
+  background-color: transparent;
   font-size: 22px;
+  color: white;
+  resize: none;
+`
+
+const EditButton = styled.button`
+  padding: 3px 6px;
+  border: 1px solid #1d9bf0;
+  border-radius: 5px;
+  background-color: transparent;
+  font-weight: 600;
+  font-size: 10px;
+  color: #1d9bf0;
+  text-transform: uppercase;
+  vertical-align: middle;
+  cursor: pointer;
 `
 
 const Msgs = styled.div`
@@ -52,6 +79,16 @@ const Msgs = styled.div`
 export default function Profile(){
   const user = auth.currentUser
   const [avatar, setAvatar] = useState(user?.photoURL)
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(user?.displayName)
+  const nameRef = useRef<HTMLInputElement>(null)
+  // const handleTextareaWidth = () => {
+  //   if(nameRef.current) {
+  //     // nameRef.current.style.height = "auto"
+  //     nameRef.current.style.width = nameRef.current.clientWidth + "px"
+  //     nameRef.current.style.width = nameRef.current.scrollWidth + "px"
+  //   }
+  // }
   const [msgs, setMsgs] = useState<IMsg[]>([])
   const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const {files} = e.target
@@ -66,9 +103,37 @@ export default function Profile(){
         photoURL: avatarUrl,
       })
     }
-  }  
+  }
+  const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const editedName = e.target.value
+    setName(editedName)
+  }
+  const onEdit = async () => {
+    if(!user) return
+    try {
+      //
+      if(!editing) {
+        setEditing(true)
+        if(nameRef.current){
+          nameRef.current.disabled = false
+          nameRef.current.focus()
+        }
+      } else {
+        setEditing(false)
+        if(nameRef.current){
+          nameRef.current.disabled = true
+        }
+        await updateProfile(user, {
+          displayName: name
+        })
+      }
+    } catch(error) {
+      console.log(error)
+    } finally {
+      //
+    }
+  }
   const fetchMsgs = async () => {
-    console.log(user?.uid)
     const msgQuery = query(
       collection(db, "messages"),
       where("userId", "==", user?.uid),
@@ -83,7 +148,6 @@ export default function Profile(){
       }
     })
     setMsgs(msgs)
-    console.log(msgs)
   }
   useEffect(() => {
     fetchMsgs()
@@ -99,9 +163,10 @@ export default function Profile(){
         </svg>) }
       </AvatarUpload>
       <AvatarInput onChange={onAvatarChange} id="avatar" type="file" accept="image/*" />
-      <Name>
-        {user?.displayName ?? "Anonymous"}
-      </Name>
+      <Flexbox>
+        <Name disabled type="text" ref={nameRef} maxLength={10} onChange={onNameChange} value={name ?? "Anonymous"} />
+        <EditButton onClick={onEdit}>{editing ? "Save" : "Edit"}</EditButton>
+      </Flexbox>
       <Msgs>
         {msgs.map((msg) => (
           <Message key={msg.id} {...msg} />
