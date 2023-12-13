@@ -82,8 +82,8 @@ export default function Message({id, username, photo, msg, userId}: IMsg) {
     }
   }
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const modified = e.target.value
-    setText(modified)
+    const editedText = e.target.value
+    setText(editedText)
   }
   const user = auth.currentUser
   const onDelete = async () => {
