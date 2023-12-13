@@ -72,6 +72,7 @@ export default function PostMsgForm() {
       const reader = new FileReader()
       reader.readAsDataURL(files[0])
       reader.onloadend = () => {
+        if(reader.result == null || typeof reader.result == "object") return
         setImgUrl(reader.result)
       }
     }
