@@ -2,8 +2,8 @@ import styled from 'styled-components'
 import { auth, db, storage } from '../firebase'
 import { useEffect, useRef, useState } from 'react'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
-import { updateProfile } from 'firebase/auth'
-import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore'
+import { Unsubscribe, updateProfile } from 'firebase/auth'
+import { collection, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 import { IMsg } from '../components/timeline'
 import Message from '../components/message'
 
@@ -44,7 +44,7 @@ const Flexbox = styled.div`
   gap: 10px;
 `
 
-const Name = styled.input`
+const NameInput = styled.input`
   border: none;
   border-bottom: 1px solid #1d9bf0;
   width: 160px;
@@ -82,13 +82,6 @@ export default function Profile(){
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(user?.displayName)
   const nameRef = useRef<HTMLInputElement>(null)
-  // const handleTextareaWidth = () => {
-  //   if(nameRef.current) {
-  //     // nameRef.current.style.height = "auto"
-  //     nameRef.current.style.width = nameRef.current.clientWidth + "px"
-  //     nameRef.current.style.width = nameRef.current.scrollWidth + "px"
-  //   }
-  // }
   const [msgs, setMsgs] = useState<IMsg[]>([])
   const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const {files} = e.target
@@ -111,7 +104,6 @@ export default function Profile(){
   const onEdit = async () => {
     if(!user) return
     try {
-      //
       if(!editing) {
         setEditing(true)
         if(nameRef.current){
@@ -132,25 +124,35 @@ export default function Profile(){
     } finally {
       //
     }
-  }
-  const fetchMsgs = async () => {
-    const msgQuery = query(
-      collection(db, "messages"),
-      where("userId", "==", user?.uid),
-      orderBy("createdAt", "desc"),
-      limit(10)
-    )
-    const snapshot = await getDocs(msgQuery)
-    const msgs = snapshot.docs.map((doc) => {
-      const { msg, createdAt, userId, username, photo } = doc.data()
-      return {
-        msg, createdAt, userId, username, photo, id: doc.id,
-      }
-    })
-    setMsgs(msgs)
-  }
+  }  
   useEffect(() => {
+    let unsubscribe : Unsubscribe | null = null
+    const fetchMsgs = async () => {
+      const msgQuery = query(
+        collection(db, "messages"),
+        where("userId", "==", user?.uid),
+        orderBy("createdAt", "desc"),
+        limit(10)
+      )
+      unsubscribe = await onSnapshot(msgQuery, (snapshot) => {
+          const msgs = snapshot.docs.map((doc) => {
+            const { msg, createdAt, userId, username, photo } = doc.data()
+            return {
+              id: doc.id,
+              msg,
+              createdAt,
+              userId,
+              username,
+              photo
+            }
+          })
+          setMsgs(msgs)
+        })
+    }
     fetchMsgs()
+    return () => { // cleanup function
+      unsubscribe && unsubscribe()
+    }
   }, [])
   return (
     <Wrapper>
@@ -164,7 +166,7 @@ export default function Profile(){
       </AvatarUpload>
       <AvatarInput onChange={onAvatarChange} id="avatar" type="file" accept="image/*" />
       <Flexbox>
-        <Name disabled type="text" ref={nameRef} maxLength={10} onChange={onNameChange} value={name ?? "Anonymous"} />
+        <NameInput disabled type="text" ref={nameRef} maxLength={10} onChange={onNameChange} value={name ?? "Anonymous"} />
         <EditButton onClick={onEdit}>{editing ? "Save" : "Edit"}</EditButton>
       </Flexbox>
       <Msgs>
