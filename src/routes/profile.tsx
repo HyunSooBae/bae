@@ -135,19 +135,19 @@ export default function Profile(){
         limit(10)
       )
       unsubscribe = await onSnapshot(msgQuery, (snapshot) => {
-          const msgs = snapshot.docs.map((doc) => {
-            const { msg, createdAt, userId, username, photo } = doc.data()
-            return {
-              id: doc.id,
-              msg,
-              createdAt,
-              userId,
-              username,
-              photo
-            }
-          })
-          setMsgs(msgs)
+        const msgs = snapshot.docs.map((doc) => {
+          const { msg, createdAt, userId, username, photo } = doc.data()
+          return {
+            id: doc.id,
+            msg,
+            createdAt,
+            userId,
+            username,
+            photo
+          }
         })
+        setMsgs(msgs)
+      })
     }
     fetchMsgs()
     return () => { // cleanup function

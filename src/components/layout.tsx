@@ -9,7 +9,7 @@ const Wrapper = styled.div`
   padding: 50px 50px;
   width: 100%;
   height: 100%;
-  min-width: 860px;
+  min-width: 500px;
 `
 
 const Menu = styled.div`
@@ -17,6 +17,7 @@ const Menu = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  /* position: fixed; */
 `
 
 const MenuItem = styled.div`
@@ -53,7 +54,6 @@ export default function Layout() {
   return (
     <Wrapper>
       <Menu>
-
         <Link to="/">
         <MenuItem>
           <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
