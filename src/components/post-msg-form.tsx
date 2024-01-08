@@ -8,6 +8,11 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 10px;
+  justify-content: center;
+  align-items: center;
+  position: sticky;
+  top: 0px;
+  z-index: 1000;
 `
 
 const TextArea = styled.textarea`
@@ -29,8 +34,40 @@ const TextArea = styled.textarea`
   }
 `
 
+const PreviewPhoto = styled.div`
+  position: relative;
+  width: fit-content;
+  max-height: 150px;
+  text-align: center;
+`
+
+const Photo = styled.img`
+  height: 100%;
+`
+
+const PhotoDeleteButton = styled.button`
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #1d9bf0;
+  border-radius: 20px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: #1d9bf0;
+  cursor: pointer;
+  svg {
+    display: block;
+    /* width: 100%;
+    height: 100%; */
+  }
+`
+
 const AttachFileButton = styled.label`
   padding: 10px 0px;
+  width: 100%;
   border: 1px solid #1d9bf0;
   border-radius: 20px;
   text-align: center;
@@ -46,6 +83,7 @@ const AttachFileInput = styled.input`
 
 const SubmitBtn = styled.input`
   padding: 10px 0px;
+  width: 100%;
   border: none;
   border-radius: 20px;
   background-color: #1d9bf0;
@@ -63,23 +101,26 @@ export default function PostMsgForm() {
   const [msg, setMsg] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [imgUrl, setImgUrl ] = useState("")
-  const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const onMsgChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMsg(e.target.value)
   }
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = e.target
+    if(files && files.length >= 1) {
+      setFile(files[0])
+    }
     if(files){
       const reader = new FileReader()
       reader.readAsDataURL(files[0])
       reader.onloadend = () => {
-        if(reader.result == null || typeof reader.result == "object") return
-        setImgUrl(reader.result)
+        setImgUrl(String(reader.result))
+        e.target.value = ""
       }
     }
-    if(files && files.length >= 1) {
-      setFile(files[0])
-
-    }
+  }
+  const onDelClick = () => {
+    setFile(null)
+    setImgUrl("")
   }
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -113,8 +154,16 @@ export default function PostMsgForm() {
 
   return (
     <Form onSubmit={onSubmit}>
-      <TextArea onChange={onChange} value={msg} placeholder="Your Plan?" rows={5} maxLength={180} required />
-      <img src={imgUrl ? imgUrl : ""} />
+      <TextArea onChange={onMsgChange} value={msg} placeholder="Your Plan?" rows={5} maxLength={180} required />
+      <PreviewPhoto>
+        <Photo src={imgUrl ? imgUrl : ""} />
+        {imgUrl && 
+        <PhotoDeleteButton onClick={onDelClick} type="button">
+          <svg fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </PhotoDeleteButton>}
+      </PreviewPhoto>
       <AttachFileButton htmlFor="file">{file? "Photo added ✅" : "Add photo"}</AttachFileButton>
       <AttachFileInput onChange={onFileChange} type="file" id="file" accept="image/*" />
       <SubmitBtn type="submit" value={isLoading? "Posting..." : "Post Message"} />

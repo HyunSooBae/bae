@@ -18,7 +18,7 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 `
 
 export default function Timeline() {
@@ -56,6 +56,8 @@ export default function Timeline() {
           }
         })
         setMsgs(msgs)
+        console.log('snapshot 작동?')
+        console.log(msgs)
       })
     }
     fetchMsgs()
